@@ -3,8 +3,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { UserData, InterviewResponse } from "../types";
 
 // Always initialize with the exact environment variable and follow named parameter requirement
-const ai = new GoogleGenAI(import.meta.env.VITE_GEMINI_API_KEY
-);
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const generateNextQuestion = async (
   userData: UserData,

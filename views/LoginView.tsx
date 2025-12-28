@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { UserData } from '../types';
-import { CheckCircle2, ArrowRight, ShieldCheck, Zap, Globe } from 'lucide-react';
+import { CheckCircle2, ArrowRight, Zap, Globe } from 'lucide-react';
 
 interface LoginViewProps {
   onLogin: (data: UserData) => void;
@@ -40,19 +40,10 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row h-screen overflow-hidden">
+    <div className="flex flex-col md:flex-row min-h-screen overflow-x-hidden">
       {/* LEFT SIDE: Branding */}
       <div className="w-full md:w-1/2 bg-neutral-950 p-8 md:p-16 flex flex-col justify-center relative">
-        <div className="absolute top-10 left-10">
-          <div className="flex items-center gap-2 text-indigo-500 font-bold text-xl tracking-tighter">
-            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-              <ShieldCheck className="text-white" size={20} />
-            </div>
-            EliteHire AI
-          </div>
-        </div>
-
-        <div className="max-w-md">
+        <div className="max-w-md pt-12 md:pt-0">
           <h1 className="text-5xl md:text-6xl font-bold leading-tight mb-6">
             Professional Hiring, <span className="text-indigo-500">Redefined.</span>
           </h1>
@@ -81,7 +72,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
       </div>
 
       {/* RIGHT SIDE: Portal */}
-      <div className="w-full md:w-1/2 bg-neutral-900/50 backdrop-blur-sm p-8 md:p-16 flex flex-col justify-center border-l border-neutral-800/50">
+      <div className="w-full md:w-1/2 bg-neutral-900/50 backdrop-blur-sm p-8 md:p-16 flex flex-col justify-center border-l border-neutral-800/50 pb-24 md:pb-16">
         <div className="max-w-sm mx-auto w-full">
           <div className="mb-12">
             <h2 className="text-3xl font-bold mb-2">Candidate Portal</h2>
@@ -148,7 +139,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
             </button>
           </form>
 
-          <p className="mt-8 text-center text-xs text-neutral-600">
+          <p className="mt-8 text-center text-xs text-neutral-600 pb-8">
             By proceeding, you agree to our Terms of Service and Data Handling policies for the Imagine Cup evaluation.
           </p>
         </div>
