@@ -1,15 +1,12 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { UserData, InterviewResponse } from "../types";
-
-// Always initialize with the exact environment variable and follow named parameter requirement
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const generateNextQuestion = async (
   userData: UserData,
   history: InterviewResponse[]
 ): Promise<string> => {
-  // Use gemini-3-flash-preview for basic text tasks like question generation
+  // Initialize AI client right before use to ensure environment variables are loaded
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const model = "gemini-3-flash-preview";
   
   const historyText = history.length > 0 
@@ -34,7 +31,6 @@ export const generateNextQuestion = async (
     contents: prompt,
   });
 
-  // Extract text property directly as per guidelines
   return response.text || "Could you tell me more about your experience in this field?";
 };
 
@@ -42,7 +38,8 @@ export const evaluateCandidate = async (
   userData: UserData,
   history: InterviewResponse[]
 ) => {
-  // Use gemini-3-pro-preview for complex reasoning tasks like candidate evaluation
+  // Initialize AI client right before use
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const model = "gemini-3-pro-preview";
 
   const prompt = `
@@ -78,7 +75,6 @@ export const evaluateCandidate = async (
   });
 
   try {
-    // Trim response text before parsing as per guidelines
     const jsonStr = (response.text || "{}").trim();
     return JSON.parse(jsonStr);
   } catch (e) {
