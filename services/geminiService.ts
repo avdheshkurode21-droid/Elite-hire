@@ -6,7 +6,27 @@ export const generateNextQuestion = async (
   history: InterviewResponse[]
 ): Promise<string> => {
   // Initialize AI client right before use to ensure environment variables are loaded
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: import { GoogleGenerativeAI } from "@google/generative-ai";
+
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+
+if (!apiKey) {
+  throw new Error("Gemini API key not found");
+}
+
+const genAI = new GoogleGenerativeAI(apiKey);
+
+export async function askGemini(prompt: string) {
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const result = await model.generateContent(prompt);
+    return result.response.text();
+  } catch (error) {
+    console.error("Gemini error:", error);
+    throw error;
+  }
+}
+});
   const model = "gemini-3-flash-preview";
   
   const historyText = history.length > 0 
