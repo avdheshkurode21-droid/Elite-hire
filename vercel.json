@@ -1,6 +1,7 @@
 {
   "version": 2,
   "cleanUrls": true,
+  "framework": "vite",
   "rewrites": [
     {
       "source": "/(.*)",
@@ -22,14 +23,6 @@
         {
           "key": "X-Frame-Options",
           "value": "DENY"
-        },
-        {
-          "key": "X-XSS-Protection",
-          "value": "1; mode=block"
-        },
-        {
-          "key": "Referrer-Policy",
-          "value": "strict-origin-when-cross-origin"
         }
       ]
     }
