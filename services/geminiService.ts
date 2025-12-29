@@ -1,107 +1,61 @@
-import { GoogleGenAI, Type } from "@google/genai";
+
 import { UserData, InterviewResponse } from "../types";
 
+/**
+ * Calls the Azure Function backend to generate the next interview question.
+ */
 export const generateNextQuestion = async (
   userData: UserData,
   history: InterviewResponse[]
 ): Promise<string> => {
-  // Initialize AI client right before use to ensure environment variables are loaded
-  const ai = new GoogleGenAI({ apiKey: import { GoogleGenerativeAI } from "@google/generative-ai";
-
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-
-if (!apiKey) {
-  throw new Error("Gemini API key not found");
-}
-
-const genAI = new GoogleGenerativeAI(apiKey);
-
-export async function askGemini(prompt: string) {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-    const result = await model.generateContent(prompt);
-    return result.response.text();
-  } catch (error) {
-    console.error("Gemini error:", error);
-    throw error;
+    const response = await fetch('/api/interview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'generateQuestion',
+        userData,
+        history
+      })
+    });
+
+    if (!response.ok) throw new Error('Backend failed to generate question');
+    
+    const data = await response.json();
+    return data.text || "Could you tell me more about your experience in this field?";
+  } catch (err) {
+    console.error("API Error:", err);
+    throw err;
   }
-}
-});
-  const model = "gemini-3-flash-preview";
-  
-  const historyText = history.length > 0 
-    ? history.map(h => `Q: ${h.question}\nA: ${h.answer}`).join('\n') 
-    : "This is the start of the interview.";
-
-  const prompt = `
-    You are an expert HR interviewer for the role of ${userData.domain}.
-    The candidate's name is ${userData.fullName}.
-    
-    Current Interview History:
-    ${historyText}
-    
-    Based on the history and the domain, generate the NEXT professional interview question.
-    If there is no history, ask an introductory technical or behavioral question related to ${userData.domain}.
-    Keep the question concise and professional.
-    Return ONLY the question text.
-  `;
-
-  const response = await ai.models.generateContent({
-    model,
-    contents: prompt,
-  });
-
-  return response.text || "Could you tell me more about your experience in this field?";
 };
 
+/**
+ * Calls the Azure Function backend to evaluate the candidate's performance.
+ */
 export const evaluateCandidate = async (
   userData: UserData,
   history: InterviewResponse[]
 ) => {
-  // Initialize AI client right before use
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  const model = "gemini-3-pro-preview";
-
-  const prompt = `
-    Analyze the following interview performance for a ${userData.domain} position.
-    
-    Candidate: ${userData.fullName}
-    Domain: ${userData.domain}
-    
-    Interview Transcript:
-    ${history.map(h => `Q: ${h.question}\nA: ${h.answer}`).join('\n\n')}
-    
-    Evaluate the candidate on a scale of 0-100. Provide a recommendation ('Recommended' or 'Not Recommended') and a short summary.
-    
-    Return the result in JSON format.
-  `;
-
-  const response = await ai.models.generateContent({
-    model,
-    contents: prompt,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          score: { type: Type.NUMBER },
-          recommendation: { type: Type.STRING, description: "'Recommended' or 'Not Recommended'" },
-          summary: { type: Type.STRING }
-        },
-        required: ["score", "recommendation", "summary"],
-        propertyOrdering: ["score", "recommendation", "summary"],
-      }
-    }
-  });
-
   try {
-    const jsonStr = (response.text || "{}").trim();
-    return JSON.parse(jsonStr);
-  } catch (e) {
+    const response = await fetch('/api/interview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'evaluate',
+        userData,
+        history
+      })
+    });
+
+    if (!response.ok) throw new Error('Backend failed to evaluate candidate');
+    
+    return await response.json();
+  } catch (err) {
+    console.error("API Error:", err);
     return {
       score: 70,
       recommendation: "Recommended",
-      summary: "Candidate showed basic proficiency in the required domain skills."
+      summary: "Candidate evaluation completed with default parameters due to a connectivity issue."
     };
   }
 };
