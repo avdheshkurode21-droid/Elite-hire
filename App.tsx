@@ -32,9 +32,9 @@ const App: React.FC = () => {
     setCurrentView(AppView.DOMAIN_SELECTION);
   };
 
-  const handleDomainSelect = (domain: string) => {
+  const handleDomainSelect = (domain: string, color?: string) => {
     if (userData) {
-      setUserData({ ...userData, domain });
+      setUserData({ ...userData, domain, domainColor: color });
       setCurrentView(AppView.INTERVIEW);
     }
   };
@@ -96,13 +96,17 @@ const App: React.FC = () => {
         {currentView === AppView.DASHBOARD && <HRDashboard results={results} />}
       </main>
 
-      {/* Powered by Orbion Attribution */}
-      <footer className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[40] pointer-events-none">
-        <div className="flex items-center gap-3 px-6 py-2 bg-neutral-950/20 backdrop-blur-md border border-white/5 rounded-full opacity-40 hover:opacity-100 transition-all duration-500 pointer-events-auto group">
-          <span className="text-[9px] font-bold tracking-[0.3em] text-neutral-500 uppercase">Powered by</span>
-          <div className="flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full group-hover:animate-ping"></div>
-            <span className="text-xs font-black tracking-tighter text-white/90">ORBION</span>
+      {/* Powered by Orbion Attribution - Interactive Discovery */}
+      <footer className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[40] group">
+        <div className="flex items-center gap-3 px-6 py-2 bg-neutral-950/40 backdrop-blur-xl border border-white/10 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-1000 cursor-default">
+          <span className="text-[9px] font-black tracking-[0.4em] text-neutral-500 uppercase">Powered by</span>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full shadow-[0_0_8px_rgba(99,102,241,0.8)] transition-transform duration-500 group-hover:scale-125"></div>
+              {/* Only animate when the group is hovered */}
+              <div className="absolute inset-0 bg-indigo-500 rounded-full opacity-0 group-hover:opacity-40 group-hover:animate-ping"></div>
+            </div>
+            <span className="text-xs font-black tracking-[0.1em] text-white">ORBION</span>
           </div>
         </div>
       </footer>

@@ -12,6 +12,7 @@ export interface UserData {
   phone: string;
   idNo: string;
   domain?: string;
+  domainColor?: string;
 }
 
 export interface InterviewResponse {
@@ -33,4 +34,5 @@ export interface DomainOption {
   label: string;
   icon: string;
   description: string;
+  color: string; // Tailwind color class (e.g., 'indigo', 'emerald', 'amber')
 }
