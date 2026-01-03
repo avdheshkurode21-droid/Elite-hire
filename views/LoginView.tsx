@@ -1,13 +1,17 @@
 
 import React, { useState } from 'react';
-import { UserData } from '../types';
+import { UserData, Language } from '../types';
 import { CheckCircle2, ArrowRight, Zap, Globe } from 'lucide-react';
+import { TRANSLATIONS } from '../translations';
 
 interface LoginViewProps {
   onLogin: (data: UserData) => void;
+  language: Language;
 }
 
-const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
+const LoginView: React.FC<LoginViewProps> = ({ onLogin, language }) => {
+  const t = TRANSLATIONS[language].login;
+  
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
@@ -45,17 +49,17 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
       <div className="w-full md:w-1/2 bg-neutral-950 p-8 md:p-16 flex flex-col justify-center relative">
         <div className="max-w-md pt-12 md:pt-0">
           <h1 className="text-5xl md:text-6xl font-bold leading-tight mb-6">
-            Professional Hiring, <span className="text-indigo-500">Redefined.</span>
+            {t.title} <span className="text-indigo-500">{t.titleHighlight}</span>
           </h1>
           <p className="text-neutral-400 text-lg mb-10 leading-relaxed">
-            Our AI-powered platform helps the world's leading companies identify top talent through dynamic, domain-specific intelligence.
+            {t.description}
           </p>
 
           <div className="space-y-6">
             {[
-              { icon: Zap, text: "Instant AI Evaluation" },
-              { icon: Globe, text: "Global Recruitment Standards" },
-              { icon: CheckCircle2, text: "Verified Domain Expertise" }
+              { icon: Zap, text: t.features[0] },
+              { icon: Globe, text: t.features[1] },
+              { icon: CheckCircle2, text: t.features[2] }
             ].map((item, idx) => (
               <div key={idx} className="flex items-center gap-4 group">
                 <div className="p-3 bg-neutral-900 border border-neutral-800 rounded-xl group-hover:border-indigo-500 transition-colors">
@@ -66,8 +70,6 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
             ))}
           </div>
         </div>
-
-        {/* Decorative elements */}
         <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl"></div>
       </div>
 
@@ -75,16 +77,15 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
       <div className="w-full md:w-1/2 bg-neutral-900/50 backdrop-blur-sm p-8 md:p-16 flex flex-col justify-center border-l border-neutral-800/50 pb-24 md:pb-16">
         <div className="max-w-sm mx-auto w-full">
           <div className="mb-12">
-            <h2 className="text-3xl font-bold mb-2">Candidate Portal</h2>
-            <p className="text-neutral-500">Please enter your registration details to proceed to the evaluation.</p>
+            <h2 className="text-3xl font-bold mb-2">{t.portalTitle}</h2>
+            <p className="text-neutral-500">{t.portalSub}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Input Wrapper */}
             {[
-              { id: 'fullName', label: 'Full Name', type: 'text', placeholder: 'e.g. Alexander Pierce' },
-              { id: 'phone', label: 'Phone Number', type: 'tel', placeholder: '+1 (555) 000-0000' },
-              { id: 'idNo', label: 'Registration / ID Number', type: 'text', placeholder: 'ID-XXXX-XXXX' }
+              { id: 'fullName', label: t.fields.name, type: 'text', placeholder: 'e.g. Alexander Pierce' },
+              { id: 'phone', label: t.fields.phone, type: 'tel', placeholder: '+1 (555) 000-0000' },
+              { id: 'idNo', label: t.fields.id, type: 'text', placeholder: 'ID-XXXX-XXXX' }
             ].map((field) => (
               <div key={field.id} className="relative group">
                 <label htmlFor={field.id} className="block text-xs font-semibold text-neutral-500 uppercase tracking-widest mb-2 transition-colors group-focus-within:text-indigo-400">
@@ -109,8 +110,6 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
                     `}
                     required
                   />
-                  
-                  {/* Validation Tick Pop-up */}
                   <div className={`
                     absolute right-4 top-1/2 -translate-y-1/2 transition-all duration-500 transform
                     ${isValid(field.id as keyof typeof formData) ? 'scale-100 opacity-100' : 'scale-0 opacity-0'}
@@ -134,25 +133,15 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
                 }
               `}
             >
-              Proceed to Domain Selection
+              {t.button}
               <ArrowRight size={20} className={isValid('fullName') && isValid('phone') && isValid('idNo') ? 'animate-bounce-x' : ''} />
             </button>
           </form>
-
-          <p className="mt-8 text-center text-xs text-neutral-600 pb-8">
-            By proceeding, you agree to our Terms of Service and Data Handling policies for the Imagine Cup evaluation.
-          </p>
         </div>
       </div>
-
       <style>{`
-        @keyframes bounce-x {
-          0%, 100% { transform: translateX(0); }
-          50% { transform: translateX(5px); }
-        }
-        .animate-bounce-x {
-          animation: bounce-x 1s infinite;
-        }
+        @keyframes bounce-x { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
+        .animate-bounce-x { animation: bounce-x 1s infinite; }
       `}</style>
     </div>
   );

@@ -7,6 +7,12 @@ export enum AppView {
   DASHBOARD = 'DASHBOARD'
 }
 
+export enum Language {
+  EN = 'EN',
+  ES = 'ES',
+  FR = 'FR'
+}
+
 export interface UserData {
   fullName: string;
   phone: string;

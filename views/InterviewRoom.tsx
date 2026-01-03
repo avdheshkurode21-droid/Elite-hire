@@ -1,26 +1,20 @@
 
-import React, { useState, useEffect } from 'react';
-import { UserData, InterviewResponse } from '../types';
+import React, { useState, useEffect, useRef } from 'react';
+import { UserData, InterviewResponse, Language } from '../types';
 import { getDomainQuestions, evaluateFullAssessment } from '../services/geminiService';
-import { 
-  AlertCircle, 
-  ArrowRight, 
-  ArrowLeft, 
-  CheckCircle2, 
-  ClipboardCheck, 
-  Cpu,
-  Code2,
-  Layers,
-  Activity,
-  Zap
-} from 'lucide-react';
+import { TRANSLATIONS } from '../translations';
+import { AlertCircle, ArrowRight, ArrowLeft, CheckCircle2, ClipboardCheck, Cpu, Code2, Layers, Zap, Loader2 } from 'lucide-react';
 
 interface InterviewRoomProps {
   userData: UserData;
   onComplete: (result: any, history: InterviewResponse[]) => void;
+  language: Language;
 }
 
-const InterviewRoom: React.FC<InterviewRoomProps> = ({ userData, onComplete }) => {
+const InterviewRoom: React.FC<InterviewRoomProps> = ({ userData, onComplete, language }) => {
+  const t = TRANSLATIONS[language].interview;
+  const common = TRANSLATIONS[language].common;
+  
   const [questions, setQuestions] = useState<string[]>([]);
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
@@ -34,63 +28,48 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ userData, onComplete }) =
   const themeText = `text-${themeColor}-500`;
   const themeTextLight = `text-${themeColor}-400`;
   const themeBg = `bg-${themeColor}-500`;
-  const themeBgDark = `bg-${themeColor}-600`;
-  const themeGlow = `shadow-[0_0_8px_rgba(var(--theme-rgb),0.5)]`;
-  const themeBorder = `from-${themeColor}-500`;
+  
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const themeRgbMap: Record<string, string> = {
-    indigo: '99, 102, 241',
-    emerald: '16, 185, 129',
-    amber: '245, 158, 11',
-    rose: '244, 63, 94',
-    blue: '59, 130, 246',
-    slate: '71, 85, 105',
-    cyan: '6, 182, 212',
-    fuchsia: '192, 38, 211',
-    violet: '139, 92, 246'
-  };
-  const themeRgb = themeRgbMap[themeColor] || themeRgbMap.indigo;
+  useEffect(() => { 
+    loadAssessment(); 
+  }, []);
 
   useEffect(() => {
-    loadAssessment();
-  }, []);
+    if (!isProcessingStep && !isLoading && textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, [currentStep, isProcessingStep, isLoading]);
 
   const loadAssessment = async () => {
     setIsLoading(true);
     try {
       const qSet = await getDomainQuestions(userData.domain || "");
       setQuestions(qSet);
-    } catch (err) {
-      setError("System failed to load local domain questions.");
-    } finally {
-      setIsLoading(false);
+    } catch (err) { 
+      setError("System failure during neural map acquisition."); 
+    } finally { 
+      setIsLoading(false); 
     }
   };
 
-  const handleAnswerChange = (val: string) => {
-    setAnswers(prev => ({ ...prev, [currentStep]: val }));
-  };
-
-  const nextStep = () => {
+  const handleNextTransition = () => {
     if (currentStep < questions.length - 1) {
-      // Step 1: Fade out current content
       setIsFadingOut(true);
-      
+      // Wait for exit animation
       setTimeout(() => {
-        // Step 2: Show processing state briefly
         setIsProcessingStep(true);
         setIsFadingOut(false);
-        
+        // Artificial processing delay for "thoughtful" AI feel
         setTimeout(() => {
-          // Step 3: Move to next step and reset
           setCurrentStep(prev => prev + 1);
           setIsProcessingStep(false);
-        }, 1200); // Optimized for fluid feel
-      }, 400); // Duration of fade-out animation
+        }, 1000);
+      }, 300);
     }
   };
 
-  const prevStep = () => {
+  const handlePrevTransition = () => {
     if (currentStep > 0) {
       setIsFadingOut(true);
       setTimeout(() => {
@@ -100,213 +79,179 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ userData, onComplete }) =
     }
   };
 
+  const handleSubmit = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    
+    // Construct full history
+    const history: InterviewResponse[] = questions.map((q, i) => ({ 
+      question: q, 
+      answer: answers[i] || '' 
+    }));
+
+    try {
+      const result = await evaluateFullAssessment(userData, history);
+      onComplete(result, history);
+    } catch (err) { 
+      setError("Dossier finalization encountered a critical interrupt."); 
+      setIsSubmitting(false); 
+    }
+  };
+
+  if (isLoading) return (
+    <div className="h-screen bg-neutral-950 flex flex-col items-center justify-center p-8 text-center animate-pulse">
+      <div className="relative mb-8">
+        <div className={`absolute inset-0 blur-3xl opacity-20 bg-${themeColor}-500`}></div>
+        <Cpu className={`${themeTextLight} relative z-10`} size={64} />
+      </div>
+      <h2 className="text-2xl font-black uppercase tracking-[0.4em] text-neutral-200">{t.status}</h2>
+      <p className="mt-4 text-neutral-600 font-mono text-[10px] uppercase tracking-widest">Acquiring domain-specific technical matrices...</p>
+    </div>
+  );
+
   const currentAnswer = answers[currentStep] || '';
   const canProceed = currentAnswer.trim().length >= 6;
   const isFinalStep = currentStep === questions.length - 1;
 
-  const handleSubmit = async () => {
-    if (!canProceed || isSubmitting) return;
-
-    setIsSubmitting(true);
-    const formattedHistory: InterviewResponse[] = questions.map((q, i) => ({
-      question: q,
-      answer: answers[i] || ''
-    }));
-
-    try {
-      const result = await evaluateFullAssessment(userData, formattedHistory);
-      onComplete(result, formattedHistory);
-    } catch (err) {
-      setError("Assessment engine encountered a processing error.");
-      setIsSubmitting(false);
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="h-screen bg-neutral-950 flex flex-col items-center justify-center p-8 text-center">
-        <Cpu className={`${themeTextLight} animate-pulse mb-6`} size={48} />
-        <h2 className="text-xl font-bold uppercase tracking-widest text-neutral-200">Retrieving Domain Matrix</h2>
-        <p className="text-neutral-600 text-[10px] mt-2 font-mono uppercase tracking-[0.3em]">Accessing Local Storage: {userData.domain}</p>
-      </div>
-    );
-  }
-
-  if (isSubmitting) {
-    return (
-      <div className="h-screen bg-neutral-950 flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-1000">
-        <div className="relative mb-10">
-          <div className={`absolute inset-0 bg-${themeColor}-600/20 blur-[100px] rounded-full animate-pulse`}></div>
-          <Activity size={80} className={`${themeTextLight} relative z-10`} />
-        </div>
-        <h2 className="text-2xl font-black mb-4 tracking-tighter uppercase">Compiling Linguistic Data</h2>
-        <div className="max-w-xs w-full space-y-4">
-          <div className="h-1 bg-neutral-900 rounded-full overflow-hidden">
-            <div className={`h-full ${themeBg} animate-[loading_2s_ease-in-out_infinite]`}></div>
-          </div>
-          <div className="flex justify-between text-[9px] uppercase font-black text-neutral-700 tracking-[0.2em]">
-            <span>Keyword Verification</span>
-            <span>Calculating Final Rank</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="h-screen bg-neutral-950 flex flex-col overflow-hidden text-neutral-300" style={{ '--theme-rgb': themeRgb } as any}>
+    <div className="h-screen bg-neutral-950 flex flex-col overflow-hidden text-neutral-300 relative">
+      {/* Global Processing Overlays */}
+      {(isProcessingStep || isSubmitting) && (
+        <div className="absolute inset-0 z-50 bg-neutral-950/90 backdrop-blur-xl flex flex-col items-center justify-center p-8 text-center">
+          <div className="relative mb-8">
+            <div className={`absolute inset-0 animate-ping opacity-20 rounded-full bg-${themeColor}-500`}></div>
+            {isSubmitting ? (
+              <Loader2 size={48} className={`${themeTextLight} animate-spin`} />
+            ) : (
+              <Zap size={48} className={`${themeTextLight} animate-pulse`} />
+            )}
+          </div>
+          <h2 className="text-xl font-black uppercase tracking-[0.3em] text-white">
+            {isSubmitting ? t.finalize : t.processing}
+          </h2>
+          <p className="text-neutral-500 text-[10px] mt-3 font-mono uppercase tracking-[0.2em] max-w-xs leading-relaxed">
+            {isSubmitting ? "Generating high-fidelity evaluation dossier via neural reasoning..." : t.integrating}
+          </p>
+        </div>
+      )}
+
+      {error && (
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[60] bg-rose-500/10 border border-rose-500/20 px-6 py-3 rounded-full flex items-center gap-3 animate-in slide-in-from-top-4">
+          <AlertCircle size={16} className="text-rose-500" />
+          <span className="text-xs font-bold text-rose-500 uppercase tracking-widest">{error}</span>
+          <button onClick={() => setError(null)} className="text-rose-500/50 hover:text-rose-500 text-[10px] font-black underline uppercase">Dismiss</button>
+        </div>
+      )}
+
+      {/* Header */}
       <nav className="h-16 shrink-0 border-b border-white/5 bg-neutral-900/40 flex items-center justify-between px-8 z-20">
         <div className="flex items-center gap-4">
           <div className="px-3 py-1 bg-neutral-800 border border-white/5 rounded-md text-[10px] font-black uppercase tracking-tighter text-neutral-400">
-            Secure Session
+            {common.secure}
           </div>
-          <span className="text-xs font-bold text-neutral-500 uppercase tracking-widest">
-            {userData.domain} Assessment
-          </span>
+          <span className="text-xs font-bold text-neutral-500 uppercase tracking-widest">{userData.domain}</span>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex gap-1.5 mr-4">
+        <div className="flex items-center gap-6">
+          <div className="flex gap-2">
             {questions.map((_, i) => (
               <div 
                 key={i} 
-                className={`h-1 w-6 rounded-full transition-all duration-700 ${i <= currentStep ? `${themeBg} ${themeGlow}` : 'bg-neutral-800'}`} 
+                className={`h-1.5 w-8 rounded-full transition-all duration-700 ${i <= currentStep ? `${themeBg} shadow-[0_0_12px_rgba(var(--theme-rgb),0.5)]` : 'bg-neutral-800'}`} 
               />
             ))}
           </div>
-          <div className="text-[10px] font-mono text-neutral-500 bg-neutral-900 px-3 py-1 rounded-md border border-white/5">
-            STEP {currentStep + 1}/{questions.length}
+          <div className="text-[10px] font-mono text-neutral-500 bg-neutral-950 px-3 py-1 rounded-md border border-white/5 uppercase">
+            {currentStep + 1} / {questions.length}
           </div>
         </div>
       </nav>
 
+      {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden relative">
-        {/* Processing Overlay */}
-        {isProcessingStep && (
-          <div className="absolute inset-0 z-50 bg-neutral-950/80 backdrop-blur-md flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-500">
-            <div className="relative mb-6">
-              <div className={`absolute inset-0 bg-${themeColor}-500/20 blur-2xl rounded-full scale-150`}></div>
-              <Zap size={40} className={`${themeTextLight} animate-pulse relative z-10`} />
+        {/* Left Side: Question */}
+        <div key={`q-${currentStep}`} className={`w-2/5 border-r border-white/5 bg-neutral-900/10 p-12 md:p-20 flex flex-col justify-center relative transition-all duration-700 ${isFadingOut ? 'opacity-0 -translate-x-12 blur-md' : 'opacity-100 translate-x-0'}`}>
+          <div className="max-w-md">
+            <div className="flex items-center gap-3 mb-8">
+              <Layers size={16} className={themeText} />
+              <span className={`text-[11px] font-black uppercase tracking-[0.5em] ${themeText}`}>
+                {t.inquiry} {currentStep + 1}
+              </span>
             </div>
-            <h2 className="text-lg font-black uppercase tracking-[0.25em] text-white">Neural Registration</h2>
-            <p className="text-neutral-500 text-[9px] mt-2 font-mono uppercase tracking-widest">Integrating Lexical Data...</p>
-            <div className="mt-6 w-32 h-0.5 bg-neutral-900 rounded-full overflow-hidden">
-              <div className={`h-full ${themeBg} animate-[loading_1.2s_ease-in-out_forwards]`}></div>
-            </div>
-          </div>
-        )}
-
-        {/* Question Panel */}
-        <div 
-          key={`q-${currentStep}`}
-          className={`
-            w-1/3 border-r border-white/5 bg-neutral-900/20 p-12 flex flex-col justify-center relative transition-all duration-500
-            ${isFadingOut ? 'opacity-0 -translate-x-8 blur-sm' : 'opacity-100 translate-x-0 blur-0'}
-            animate-in fade-in slide-in-from-left-6 duration-700
-          `}
-        >
-          <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${themeBorder} to-transparent opacity-30`}></div>
-          
-          <div className="mb-8">
-            <div className="flex items-center gap-2 mb-6">
-              <Layers size={14} className={themeText} />
-              <span className={`text-[10px] font-black uppercase tracking-[0.4em] ${themeText}`}>Inquiry {currentStep + 1}</span>
-            </div>
-            <h2 className="text-2xl md:text-3xl font-bold text-white leading-tight tracking-tight">
+            <h2 className="text-3xl md:text-4xl font-black text-white leading-[1.15] tracking-tight">
               {questions[currentStep]}
             </h2>
           </div>
-
-          <div className="mt-auto space-y-4">
-             <div className="p-4 bg-neutral-950/50 border border-white/5 rounded-2xl">
-               <div className="text-[9px] font-black uppercase tracking-widest text-neutral-600 mb-2">Candidate Details</div>
-               <div className="text-sm font-bold text-neutral-400">{userData.fullName}</div>
-               <div className="text-[10px] font-mono text-neutral-700 mt-1">ID: {userData.idNo}</div>
-             </div>
-          </div>
         </div>
 
-        {/* Response Area */}
-        <div 
-          key={`a-${currentStep}`}
-          className={`
-            flex-1 bg-neutral-950 p-12 flex flex-col transition-all duration-500
-            ${isFadingOut ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}
-            animate-in fade-in slide-in-from-right-6 duration-700
-          `}
-        >
-          <div className="flex items-center gap-3 mb-6 text-neutral-600">
-            <Code2 size={16} />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Response Input Area</span>
+        {/* Right Side: Answer Input */}
+        <div key={`a-${currentStep}`} className={`flex-1 bg-neutral-950 p-12 md:p-20 flex flex-col transition-all duration-700 delay-75 ${isFadingOut ? 'opacity-0 translate-y-8 blur-md' : 'opacity-100 translate-y-0'}`}>
+          <div className="flex items-center justify-between mb-8 text-neutral-600">
+            <div className="flex items-center gap-3">
+              <Code2 size={18} />
+              <span className="text-[11px] font-black uppercase tracking-[0.3em]">{t.inputArea}</span>
+            </div>
+            <div className="text-[10px] font-mono uppercase tracking-widest opacity-40">
+              {currentAnswer.length} chars
+            </div>
           </div>
-
+          
           <div className="flex-1 relative group">
-            <textarea
-              autoFocus
-              value={currentAnswer}
-              onChange={(e) => handleAnswerChange(e.target.value)}
-              placeholder="Structure your professional response here. Detailed answers increase assessment depth..."
-              className="w-full h-full bg-transparent text-xl md:text-2xl font-medium outline-none resize-none text-neutral-200 placeholder:text-neutral-800/40 leading-relaxed custom-scrollbar"
+            <textarea 
+              ref={textareaRef}
+              value={currentAnswer} 
+              onChange={(e) => setAnswers(prev => ({...prev, [currentStep]: e.target.value}))} 
+              placeholder={t.placeholder} 
+              className="w-full h-full bg-transparent text-xl md:text-2xl font-medium outline-none resize-none text-neutral-200 placeholder:text-neutral-800/30 leading-relaxed scrollbar-hide"
             />
             
-            {!canProceed && !isFadingOut && (
-              <div className="absolute bottom-0 right-0 p-4 animate-pulse duration-1000">
-                <span className="text-[9px] font-black text-neutral-700 uppercase tracking-widest">Min 6 characters to validate</span>
-              </div>
-            )}
-            {canProceed && !isFadingOut && (
-              <div className="absolute bottom-0 right-0 p-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                <div className={`flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/40 rounded-lg shadow-[0_0_20px_rgba(16,185,129,0.15)]`}>
-                  <CheckCircle2 size={12} className="text-emerald-500" />
-                  <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-[0.25em]">Input Secure</span>
+            <div className="absolute bottom-0 right-0 flex items-center gap-4">
+              {!canProceed && !isFadingOut && (
+                <div className="animate-in fade-in zoom-in-95">
+                  <span className="text-[10px] font-black text-neutral-700 uppercase tracking-widest">{t.minChars}</span>
                 </div>
-              </div>
-            )}
+              )}
+              {canProceed && !isFadingOut && (
+                <div className="flex items-center gap-3 px-4 py-2 bg-emerald-500/5 border border-emerald-500/20 rounded-xl animate-in fade-in slide-in-from-right-4">
+                  <CheckCircle2 size={14} className="text-emerald-500" />
+                  <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em]">{t.inputSecure}</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      <footer className="h-20 shrink-0 border-t border-white/5 bg-neutral-900/60 backdrop-blur-xl flex items-center justify-between px-12 z-20">
-        <button
-          onClick={prevStep}
-          disabled={currentStep === 0 || isFadingOut}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-700 ${currentStep === 0 ? 'opacity-0 pointer-events-none' : 'text-neutral-600 hover:text-white hover:bg-white/5'}`}
+      {/* Footer Navigation */}
+      <footer className="h-24 shrink-0 border-t border-white/5 bg-neutral-900/60 backdrop-blur-3xl flex items-center justify-between px-12 z-20">
+        <button 
+          onClick={handlePrevTransition} 
+          disabled={currentStep === 0 || isFadingOut || isProcessingStep || isSubmitting} 
+          className={`group flex items-center gap-3 px-6 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all ${currentStep === 0 ? 'opacity-0 invisible' : 'text-neutral-500 hover:text-white hover:bg-white/5 active:scale-95'}`}
         >
-          <ArrowLeft size={14} />
-          Back
+          <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+          {common.back}
         </button>
 
-        <div className="flex items-center gap-4">
-          <div className="relative">
-             <button
-                onClick={isFinalStep ? handleSubmit : nextStep}
-                disabled={!canProceed || isSubmitting || isFadingOut}
-                className={`px-8 py-4 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center gap-3 transition-all duration-500 transform
-                  ${canProceed 
-                    ? `bg-white text-neutral-950 shadow-2xl shadow-white/5 translate-y-0 opacity-100 hover:-translate-y-1` 
-                    : 'bg-neutral-800 text-neutral-600 cursor-not-allowed opacity-40 translate-y-1'}
-                  ${isFinalStep && canProceed ? `!${themeBgDark} !text-white !shadow-${themeColor}-600/30` : ''}
-                `}
-              >
-                {isFinalStep ? 'Finalize Dossier' : 'Next Inquiry'}
-                {isFinalStep ? <ClipboardCheck size={16} /> : <ArrowRight size={16} />}
-              </button>
-          </div>
-        </div>
+        <button 
+          onClick={isFinalStep ? handleSubmit : handleNextTransition} 
+          disabled={!canProceed || isSubmitting || isProcessingStep || isFadingOut} 
+          className={`
+            px-12 py-5 rounded-[1.25rem] font-black text-[11px] uppercase tracking-[0.25em] flex items-center gap-4 transition-all relative overflow-hidden
+            ${canProceed 
+              ? 'bg-white text-neutral-950 shadow-[0_20px_40px_-10px_rgba(255,255,255,0.2)] hover:scale-[1.02] active:scale-95' 
+              : 'bg-neutral-800 text-neutral-600 cursor-not-allowed'
+            }
+          `}
+        >
+          {isFinalStep ? t.finalize : t.nextInquiry}
+          {isFinalStep ? <ClipboardCheck size={18} /> : <ArrowRight size={18} className="animate-pulse" />}
+        </button>
       </footer>
 
       <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.03); border-radius: 10px; }
-        @keyframes loading { 0% { width: 0%; } 100% { width: 100%; } }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
-
-      {error && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 bg-red-500/90 backdrop-blur-md text-white px-6 py-2 rounded-full flex items-center gap-3 shadow-2xl z-[100] animate-in slide-in-from-top-4">
-          <AlertCircle size={14} />
-          <span className="text-[10px] font-black uppercase tracking-widest">{error}</span>
-        </div>
-      )}
     </div>
   );
 };

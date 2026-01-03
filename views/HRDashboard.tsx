@@ -1,329 +1,209 @@
 
 import React, { useState } from 'react';
-import { CandidateResult } from '../types';
-import { 
-  BarChart3, 
-  Users, 
-  Search, 
-  Filter, 
-  Download, 
-  ChevronRight, 
-  ExternalLink,
-  Phone,
-  Hash,
-  Star,
-  CheckCircle,
-  XCircle,
-  Info,
-  MessageSquare,
-  ShieldAlert,
-  ClipboardList
-} from 'lucide-react';
+import { CandidateResult, Language } from '../types';
+import { TRANSLATIONS } from '../translations';
+import { Search, Plus, Send, X, Loader2, CheckCircle } from 'lucide-react';
 
 interface HRDashboardProps {
   results: CandidateResult[];
+  language: Language;
 }
 
-const HRDashboard: React.FC<HRDashboardProps> = ({ results }) => {
+const HRDashboard: React.FC<HRDashboardProps> = ({ results, language }) => {
+  const t = TRANSLATIONS[language].dashboard;
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCandidate, setSelectedCandidate] = useState<CandidateResult | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [manualData, setManualData] = useState({ name: '', score: 85 });
+  const [successMsg, setSuccessMsg] = useState(false);
 
-  const filteredResults = results.filter(r => 
+  const filtered = results.filter(r => 
     r.userData.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    r.userData.idNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
     r.userData.domain?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getThemeColor = (colorName?: string) => {
-    const map: Record<string, string> = {
-      indigo: '99, 102, 241',
-      emerald: '16, 185, 129',
-      amber: '245, 158, 11',
-      rose: '244, 63, 94',
-      blue: '59, 130, 246',
-      slate: '71, 85, 105',
-      cyan: '6, 182, 212',
-      fuchsia: '192, 38, 211',
-      violet: '139, 92, 246'
-    };
-    return map[colorName || 'indigo'] || map.indigo;
+  /**
+   * Directly implements the logic requested by the user:
+   * Submit an assessment (name, score) to the Azure endpoint.
+   */
+  const submitAssessment = async (name: string, score: number) => {
+    setIsSubmitting(true);
+    try {
+      // Note: We use the relative /api path which maps to the azurewebsites.net endpoint 
+      // when deployed or proxies to local azure functions in dev.
+      const response = await fetch("/api/saveResult", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ name, score })
+      });
+
+      if (response.ok) {
+        setSuccessMsg(true);
+        setTimeout(() => {
+          setSuccessMsg(false);
+          setIsModalOpen(false);
+        }, 2000);
+      } else {
+        alert("Failed to save assessment to Azure.");
+      }
+    } catch (error) {
+      console.error("Submission error:", error);
+      alert("Connectivity error during Azure sync.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <div className="min-h-screen pt-20 px-6 md:px-12 pb-12">
-      {/* Dashboard Header */}
+    <div className="min-h-screen pt-24 px-12 pb-12 bg-neutral-950">
       <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-bold mb-2">Recruitment Dashboard</h1>
-          <p className="text-neutral-500">Review candidate performances and AI recommendations.</p>
+          <h1 className="text-4xl font-bold mb-2">{t.title}</h1>
+          <p className="text-neutral-500">{t.sub}</p>
         </div>
         
-        <div className="flex flex-wrap gap-4">
-          <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 flex items-center gap-4 min-w-[200px]">
-            <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-400">
-              <Users size={20} />
-            </div>
-            <div>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 px-5 py-3 bg-white text-neutral-950 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-neutral-200 transition-all shadow-xl shadow-white/5 active:scale-95"
+          >
+            <Plus size={16} strokeWidth={3} />
+            Manual Assessment
+          </button>
+          
+          <div className="flex gap-4">
+            <div className="bg-neutral-900 p-4 rounded-2xl min-w-[140px] border border-white/5">
               <div className="text-2xl font-bold">{results.length}</div>
-              <div className="text-xs text-neutral-500 uppercase font-semibold">Total Candidates</div>
-            </div>
-          </div>
-          <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 flex items-center gap-4 min-w-[200px]">
-            <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-400">
-              <BarChart3 size={20} />
-            </div>
-            <div>
-              <div className="text-2xl font-bold">
-                {results.length > 0 ? (results.reduce((acc, r) => acc + r.score, 0) / results.length).toFixed(1) : 0}%
-              </div>
-              <div className="text-xs text-neutral-500 uppercase font-semibold">Avg. Performance</div>
+              <div className="text-[10px] text-neutral-500 font-bold uppercase">{t.total}</div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        {/* Candidate List */}
-        <div className="xl:col-span-2 space-y-6">
-          <div className="bg-neutral-900/50 border border-neutral-800 rounded-3xl overflow-hidden backdrop-blur-sm">
-            <div className="p-6 border-b border-neutral-800 flex flex-col sm:flex-row gap-4 justify-between items-center">
-              <div className="relative w-full sm:max-w-xs">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500" size={18} />
-                <input 
-                  type="text" 
-                  placeholder="Search candidates..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full bg-neutral-950 border border-neutral-800 rounded-xl py-3 pl-12 pr-4 text-sm outline-none focus:border-indigo-500 transition-colors"
-                />
-              </div>
-              <div className="flex gap-2">
-                <button className="p-3 bg-neutral-950 border border-neutral-800 rounded-xl hover:bg-neutral-800 transition-colors text-neutral-400">
-                  <Filter size={18} />
-                </button>
-                <button className="p-3 bg-neutral-950 border border-neutral-800 rounded-xl hover:bg-neutral-800 transition-colors text-neutral-400">
-                  <Download size={18} />
-                </button>
-              </div>
-            </div>
+      {/* Manual Entry Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+          <div className="absolute inset-0 bg-neutral-950/80 backdrop-blur-md" onClick={() => !isSubmitting && setIsModalOpen(false)}></div>
+          <div className="relative w-full max-w-md bg-neutral-900 border border-white/10 rounded-[2.5rem] p-8 shadow-2xl animate-in fade-in zoom-in-95 duration-300">
+            <button 
+              onClick={() => setIsModalOpen(false)}
+              className="absolute top-6 right-6 p-2 text-neutral-500 hover:text-white transition-colors"
+            >
+              <X size={20} />
+            </button>
+            
+            <h2 className="text-2xl font-black mb-2">Manual Submission</h2>
+            <p className="text-neutral-500 text-sm mb-8">Direct sync to Azure Table Storage via Cloud Function.</p>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="border-b border-neutral-800 bg-neutral-950/50">
-                    <th className="px-6 py-4 text-xs font-semibold text-neutral-500 uppercase tracking-wider">Candidate Details</th>
-                    <th className="px-6 py-4 text-xs font-semibold text-neutral-500 uppercase tracking-wider">Domain</th>
-                    <th className="px-6 py-4 text-xs font-semibold text-neutral-500 uppercase tracking-wider">AI Score</th>
-                    <th className="px-6 py-4 text-xs font-semibold text-neutral-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-4"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-neutral-800">
-                  {filteredResults.length > 0 ? filteredResults.map((result, idx) => (
-                    <tr 
-                      key={idx} 
-                      onClick={() => setSelectedCandidate(result)}
-                      className={`group hover:bg-neutral-800/30 transition-colors cursor-pointer ${selectedCandidate?.userData.idNo === result.userData.idNo ? 'bg-indigo-500/5' : ''}`}
-                    >
-                      <td className="px-6 py-5">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-400 font-bold">
-                            {result.userData.fullName.charAt(0)}
-                          </div>
-                          <div>
-                            <div className="font-bold">{result.userData.fullName}</div>
-                            <div className="text-xs text-neutral-500 font-mono">{result.userData.idNo}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-5">
-                        <span className="px-3 py-1 bg-neutral-800 rounded-full text-xs font-medium text-neutral-300">
-                          {result.userData.domain}
-                        </span>
-                      </td>
-                      <td className="px-6 py-5">
-                        <div className="flex items-center gap-2">
-                          <div className={`text-lg font-bold ${result.score >= 80 ? 'text-emerald-400' : result.score >= 50 ? 'text-amber-400' : 'text-red-400'}`}>
-                            {result.score}%
-                          </div>
-                          <div className="w-16 h-1 bg-neutral-800 rounded-full overflow-hidden">
-                            <div className={`h-full rounded-full ${result.score >= 80 ? 'bg-emerald-500' : result.score >= 50 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${result.score}%` }}></div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-5">
-                        <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider w-fit
-                          ${result.recommendation === 'Recommended' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}
-                        `}>
-                          {result.recommendation === 'Recommended' ? <CheckCircle size={12} /> : <XCircle size={12} />}
-                          {result.recommendation}
-                        </div>
-                      </td>
-                      <td className="px-6 py-5 text-right">
-                        <ChevronRight className="inline-block text-neutral-700 group-hover:text-indigo-400 transition-colors" />
-                      </td>
-                    </tr>
-                  )) : (
-                    <tr>
-                      <td colSpan={5} className="px-6 py-12 text-center text-neutral-600">
-                        No candidates found for the given criteria.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        {/* Details Panel */}
-        <div className="space-y-6">
-          <div className="bg-neutral-900 border border-neutral-800 rounded-3xl p-6 sticky top-24 max-h-[calc(100vh-120px)] overflow-y-auto custom-scrollbar">
-            {selectedCandidate ? (
-              <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
-                {/* Profile Header */}
-                <div className="flex justify-between items-start">
-                  <div 
-                    className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold shadow-xl transition-all duration-700"
-                    style={{ 
-                      backgroundColor: `rgb(${getThemeColor(selectedCandidate.userData.domainColor)})`,
-                      boxShadow: `0 10px 30px -5px rgba(${getThemeColor(selectedCandidate.userData.domainColor)}, 0.4)`
-                    }}
-                  >
-                    {selectedCandidate.userData.fullName.charAt(0)}
-                  </div>
-                  <div className="flex gap-2">
-                    <button className="p-2 hover:bg-neutral-800 rounded-xl transition-colors text-neutral-500">
-                      <Download size={20} />
-                    </button>
-                    <button className="p-2 hover:bg-neutral-800 rounded-xl transition-colors text-neutral-500">
-                      <ExternalLink size={20} />
-                    </button>
-                  </div>
+            {successMsg ? (
+              <div className="flex flex-col items-center justify-center py-12 animate-in zoom-in-50">
+                <div className="p-4 bg-emerald-500/10 rounded-full mb-4">
+                  <CheckCircle className="text-emerald-500" size={48} />
                 </div>
-
-                <div>
-                  <h2 className="text-2xl font-bold">{selectedCandidate.userData.fullName}</h2>
-                  <p className="text-sm font-bold uppercase tracking-widest mt-1" style={{ color: `rgb(${getThemeColor(selectedCandidate.userData.domainColor)})` }}>
-                    {selectedCandidate.userData.domain} Expert
-                  </p>
-                </div>
-
-                {/* Candidate Stats Block */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 bg-neutral-950 border border-neutral-800 rounded-2xl">
-                    <div className="flex items-center gap-2 text-neutral-500 text-[10px] font-bold uppercase tracking-widest mb-1">
-                      <Phone size={12} /> Phone
-                    </div>
-                    <div className="text-sm font-medium">{selectedCandidate.userData.phone}</div>
-                  </div>
-                  <div className="p-4 bg-neutral-950 border border-neutral-800 rounded-2xl">
-                    <div className="flex items-center gap-2 text-neutral-500 text-[10px] font-bold uppercase tracking-widest mb-1">
-                      <Hash size={12} /> ID No
-                    </div>
-                    <div className="text-sm font-medium truncate">{selectedCandidate.userData.idNo}</div>
-                  </div>
-                </div>
-
-                {/* AI Audit Section */}
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-bold flex items-center gap-2">
-                      <Star size={18} className="text-amber-400" />
-                      Technical Assessment Report
-                    </h3>
-                  </div>
-                  <div className="p-5 bg-neutral-950 border border-neutral-800 rounded-2xl space-y-4">
-                    <div className="flex justify-between items-center pb-4 border-b border-neutral-900">
-                      <span className="text-neutral-400 text-sm">Competency Score</span>
-                      <span className={`text-xl font-bold ${selectedCandidate.score >= 60 ? 'text-emerald-400' : 'text-red-400'}`}>{selectedCandidate.score}%</span>
-                    </div>
-                    <div className="pt-2">
-                      <div className="flex items-center gap-2 text-xs text-neutral-500 font-bold uppercase tracking-widest mb-2">
-                        {selectedCandidate.score < 60 ? <ShieldAlert size={12} className="text-red-500" /> : <CheckCircle size={12} className="text-emerald-500" />}
-                        AI Executive Opinion
-                      </div>
-                      <p className={`text-sm leading-relaxed italic ${selectedCandidate.score < 60 ? 'text-red-400/80' : 'text-neutral-300'}`}>
-                        "{selectedCandidate.summary}"
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Full Interview Transcript Section */}
-                <div className="pt-4">
-                  <h3 className="font-bold mb-6 flex items-center gap-2 border-b border-neutral-800 pb-3">
-                    <ClipboardList size={18} style={{ color: `rgb(${getThemeColor(selectedCandidate.userData.domainColor)})` }} />
-                    Full Interview Transcript
-                  </h3>
-                  <div className="space-y-6">
-                    {selectedCandidate.responses.map((res, i) => (
-                      <div key={i} className="relative pl-6 group/qa">
-                        {/* Timeline Connector */}
-                        <div 
-                          className="absolute left-0 top-0 w-0.5 h-full transition-colors duration-500" 
-                          style={{ backgroundColor: `rgba(${getThemeColor(selectedCandidate.userData.domainColor)}, 0.2)` }}
-                        ></div>
-                        <div 
-                          className="absolute left-[-3.5px] top-0 w-2 h-2 rounded-full transition-colors duration-500 group-hover/qa:scale-125" 
-                          style={{ backgroundColor: `rgb(${getThemeColor(selectedCandidate.userData.domainColor)})` }}
-                        ></div>
-
-                        <div className="space-y-3">
-                          <div className="flex flex-col">
-                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-600 mb-1">
-                              Inquiry {String(i + 1).padStart(2, '0')}
-                            </span>
-                            <div className="text-sm font-bold text-white leading-snug">
-                              {res.question}
-                            </div>
-                          </div>
-                          
-                          <div className="bg-neutral-950 p-4 border border-neutral-800 rounded-2xl relative overflow-hidden">
-                             <div className="absolute top-0 right-0 p-2 opacity-5">
-                               <MessageSquare size={40} />
-                             </div>
-                             <div className="text-[9px] font-black uppercase tracking-widest text-neutral-500 mb-2">Candidate Response</div>
-                             <div className="text-xs text-neutral-300 leading-relaxed whitespace-pre-wrap">
-                               {res.answer}
-                             </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <p className="font-bold text-white">Assessment Saved!</p>
               </div>
             ) : (
-              <div className="h-64 flex flex-col items-center justify-center text-center p-8 space-y-4">
-                <div className="w-16 h-16 rounded-full bg-neutral-950 border border-neutral-800 flex items-center justify-center text-neutral-700">
-                  <Info size={32} />
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-2">Candidate Name</label>
+                  <input 
+                    type="text" 
+                    value={manualData.name} 
+                    onChange={e => setManualData({...manualData, name: e.target.value})}
+                    placeholder="e.g. Avdhesh" 
+                    className="w-full bg-neutral-950 border border-white/5 rounded-xl py-4 px-5 text-sm outline-none focus:border-indigo-500 transition-colors"
+                  />
                 </div>
                 <div>
-                  <h3 className="font-bold text-neutral-400">No Candidate Selected</h3>
-                  <p className="text-neutral-600 text-sm">Select a candidate from the table to view their comprehensive evaluation dossier.</p>
+                  <label className="block text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-2">Score (0-100)</label>
+                  <input 
+                    type="number" 
+                    value={manualData.score} 
+                    onChange={e => setManualData({...manualData, score: parseInt(e.target.value)})}
+                    className="w-full bg-neutral-950 border border-white/5 rounded-xl py-4 px-5 text-sm outline-none focus:border-indigo-500 transition-colors"
+                  />
                 </div>
+                
+                <button 
+                  onClick={() => submitAssessment(manualData.name, manualData.score)}
+                  disabled={!manualData.name || isSubmitting}
+                  className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 disabled:bg-neutral-800 disabled:text-neutral-600 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-3"
+                >
+                  {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                  Sync to Azure
+                </button>
               </div>
             )}
           </div>
         </div>
-      </div>
+      )}
 
-      <style>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #262626;
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #404040;
-        }
-      `}</style>
+      <div className="bg-neutral-900/50 border border-white/5 rounded-3xl overflow-hidden backdrop-blur-md">
+        <div className="p-6 border-b border-white/5 flex gap-4 items-center">
+          <div className="relative flex-1 max-w-xs">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500" size={18} />
+            <input 
+              type="text" 
+              placeholder={t.search} 
+              value={searchTerm} 
+              onChange={(e) => setSearchTerm(e.target.value)} 
+              className="w-full bg-neutral-950 border border-white/5 rounded-xl py-3 pl-12 pr-4 text-sm outline-none focus:border-white/10" 
+            />
+          </div>
+        </div>
+        
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b border-white/5 text-[10px] uppercase font-bold text-neutral-500 tracking-wider">
+                <th className="px-6 py-4">{t.table.details}</th>
+                <th className="px-6 py-4">{t.table.domain}</th>
+                <th className="px-6 py-4">{t.table.score}</th>
+                <th className="px-6 py-4">{t.table.status}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {filtered.length > 0 ? filtered.map((result, idx) => (
+                <tr key={idx} className="hover:bg-white/5 cursor-pointer transition-colors group">
+                  <td className="px-6 py-4 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-indigo-500/10 flex items-center justify-center font-bold text-indigo-400 group-hover:scale-110 transition-transform">
+                      {result.userData.fullName.charAt(0)}
+                    </div>
+                    <div>
+                      <div className="font-bold">{result.userData.fullName}</div>
+                      <div className="text-[10px] text-neutral-500 font-mono uppercase tracking-tighter">{result.userData.idNo}</div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-[10px] font-bold px-2 py-1 bg-neutral-800 border border-white/5 rounded-md uppercase tracking-widest">
+                      {result.userData.domain}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-lg">{result.score}</span>
+                      <span className="text-[10px] text-neutral-600 font-bold">%</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest ${result.recommendation === 'Recommended' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
+                      {result.recommendation}
+                    </span>
+                  </td>
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan={4} className="px-6 py-12 text-center text-neutral-600 text-sm italic">
+                    No records matched the current criteria.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 };
