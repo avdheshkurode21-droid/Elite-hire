@@ -1,5 +1,12 @@
 
-import { GoogleGenAI, Type } from "@google/genai";
+export async function generateQuestions(domain: string) {
+  return [
+    "Tell me about yourself",
+    "What are your skills in " + domain + "?",
+    "Why should we hire you?"
+  ];
+}
+
 import { UserData, InterviewResponse, CandidateResult } from "../types";
 
 /**
