@@ -57,9 +57,10 @@ const App: React.FC = () => {
       // Save locally for immediate feedback
       saveResultLocal(fullResult);
       
-      // Persist to Azure Table Storage via the background function
-      await saveResultToCloud(fullResult);
+      // Trigger cloud sync in background to avoid blocking the UI
+      saveResultToCloud(fullResult).catch(err => console.warn("Cloud sync deferred:", err));
       
+      // Move to success view immediately
       setCurrentView(AppView.SUCCESS);
     }
   };
@@ -95,7 +96,7 @@ const App: React.FC = () => {
             className="flex items-center gap-2 px-4 py-2 bg-neutral-900 border border-neutral-800 rounded-full text-xs font-medium hover:bg-neutral-800 transition-colors shadow-lg"
           >
             <LayoutDashboard size={14} />
-            HR Panel
+            {t.common.hrPanel}
           </button>
         )}
         {currentView === AppView.DASHBOARD && (
@@ -104,7 +105,7 @@ const App: React.FC = () => {
             className="flex items-center gap-2 px-4 py-2 bg-neutral-900 border border-neutral-800 rounded-full text-xs font-medium hover:bg-neutral-800 transition-colors shadow-lg"
           >
             <LogOut size={14} />
-            Candidate Portal
+            {t.common.candidatePortal}
           </button>
         )}
       </nav>

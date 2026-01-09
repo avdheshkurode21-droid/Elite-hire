@@ -19,11 +19,18 @@ export interface UserData {
   idNo: string;
   domain?: string;
   domainColor?: string;
+  // New profile fields
+  experienceLevel?: 'Fresher' | 'Experienced';
+  educationField?: string;
+  otherEducationField?: string;
+  graduationYear?: string;
 }
 
 export interface InterviewResponse {
   question: string;
   answer: string;
+  startTime?: string;
+  duration?: number; // in seconds
 }
 
 export interface CandidateResult {

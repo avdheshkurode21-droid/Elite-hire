@@ -16,7 +16,7 @@ import { DomainOption } from './types';
 
 export const DOMAINS: DomainOption[] = [
   { id: 'hr', label: 'HR Services', icon: 'Users', description: 'People management and recruitment strategies.', color: 'emerald' },
-  { id: 'finance', label: 'Finance', icon: 'TrendingUp', description: 'Financial analysis and management.', color: 'amber' },
+  { id: 'finance', label: 'Finance', icon: 'TrendingUp', description: 'Financial analysis and management.', color: 'orange' },
   { id: 'cs', label: 'Company Secretary', icon: 'Briefcase', description: 'Corporate governance and compliance.', color: 'blue' },
   { id: 'sw_dev', label: 'Software Developer', icon: 'Code', description: 'Building robust application logic.', color: 'indigo' },
   { id: 'tester', label: 'QA Tester', icon: 'ShieldCheck', description: 'Ensuring software quality and reliability.', color: 'rose' },
@@ -25,6 +25,10 @@ export const DOMAINS: DomainOption[] = [
   { id: 'frontend', label: 'Frontend Developer', icon: 'Layout', description: 'Creating beautiful user interfaces.', color: 'fuchsia' },
   { id: 'backend', label: 'Backend Developer', icon: 'Terminal', description: 'Managing servers and databases.', color: 'violet' },
 ];
+
+export const getDomainColor = (label: string): string => {
+  return DOMAINS.find(d => d.label === label)?.color || 'indigo';
+};
 
 export const QUESTION_BANK: Record<string, { q: string, keywords: string[] }[]> = {
   'HR Services': [

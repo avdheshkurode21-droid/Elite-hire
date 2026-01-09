@@ -9,7 +9,9 @@ export const TRANSLATIONS: Record<Language, any> = {
       submit: 'Submit',
       poweredBy: 'Powered by',
       secure: 'Secure Session',
-      loading: 'Loading...'
+      loading: 'Loading...',
+      hrPanel: 'HR Panel',
+      candidatePortal: 'Candidate Portal'
     },
     login: {
       title: 'Professional Hiring,',
@@ -31,9 +33,29 @@ export const TRANSLATIONS: Record<Language, any> = {
     },
     domains: {
       welcome: 'Welcome,',
+      selectionTitle: 'Domain Selection Portal',
       sub: 'Select your expertise sector to begin the high-fidelity technical evaluation.',
       initializing: 'Initializing Neural Map',
-      constructing: 'Constructing {domain} Architecture...'
+      constructing: 'Constructing {domain} Architecture...',
+      cardLabel: 'Domain Name'
+    },
+    onboarding: {
+      title: 'Profile Calibration',
+      experience: 'What is your professional experience level?',
+      fresher: 'Fresher',
+      experienced: 'Experienced',
+      education: 'Select your primary educational field:',
+      otherField: 'Please specify your educational field:',
+      gradYear: 'Enter your graduation year:',
+      confirm: 'Confirm Profile',
+      fields: [
+        'Computer Science Engineering',
+        'Electronics Engineering',
+        'Electrical Engineering',
+        'Mechanical Engineering',
+        'Civil Engineering',
+        'Others'
+      ]
     },
     interview: {
       status: 'Retrieving Domain Matrix',
@@ -45,7 +67,16 @@ export const TRANSLATIONS: Record<Language, any> = {
       nextInquiry: 'Next Inquiry',
       finalize: 'Finalize Dossier',
       processing: 'Neural Registration',
-      integrating: 'Integrating Lexical Data...'
+      integrating: 'Integrating Lexical Data...',
+      aiThinking: [
+        "Analyzing technical response depth...",
+        "Generating next context-aware question...",
+        "Evaluating domain-specific competencies...",
+        "Synchronizing encrypted response telemetry...",
+        "Calibrating neural assessment weights...",
+        "Drafting real-time performance summary...",
+        "Mapping response to global industry benchmarks..."
+      ]
     },
     success: {
       synthesis: [
@@ -68,11 +99,16 @@ export const TRANSLATIONS: Record<Language, any> = {
       total: 'Total Candidates',
       avg: 'Avg. Performance',
       search: 'Search candidates...',
+      filterAll: 'All Dossiers',
+      filterRecommended: 'Recommended',
+      filterNotRecommended: 'Not Recommended',
+      export: 'Export to Excel',
       table: {
         details: 'Candidate Details',
         domain: 'Domain',
         score: 'AI Score',
-        status: 'Status'
+        status: 'Status',
+        analysis: 'Technical Analysis'
       }
     }
   },
@@ -83,7 +119,9 @@ export const TRANSLATIONS: Record<Language, any> = {
       submit: 'Enviar',
       poweredBy: 'Impulsado por',
       secure: 'Sesión Segura',
-      loading: 'Cargando...'
+      loading: 'Cargando...',
+      hrPanel: 'Panel de RR.HH.',
+      candidatePortal: 'Portal del Candidato'
     },
     login: {
       title: 'Contratación Profesional,',
@@ -105,9 +143,29 @@ export const TRANSLATIONS: Record<Language, any> = {
     },
     domains: {
       welcome: 'Bienvenido,',
+      selectionTitle: 'Portal de Selección de Dominio',
       sub: 'Seleccione su sector de especialización para comenzar la evaluación técnica de alta fidelidad.',
       initializing: 'Iniciando Mapa Neuronal',
-      constructing: 'Construyendo Arquitectura de {domain}...'
+      constructing: 'Construyendo Arquitectura de {domain}...',
+      cardLabel: 'Nombre del Dominio'
+    },
+    onboarding: {
+      title: 'Calibración de Perfil',
+      experience: '¿Cuál es su nivel de experiencia profesional?',
+      fresher: 'Recién graduado',
+      experienced: 'Con experiencia',
+      education: 'Seleccione su campo educativo principal:',
+      otherField: 'Especifique su campo educativo:',
+      gradYear: 'Ingrese su año de graduación:',
+      confirm: 'Confirmar Perfil',
+      fields: [
+        'Ingeniería Informática',
+        'Ingeniería Electrónica',
+        'Ingeniería Eléctrica',
+        'Ingeniería Mecánica',
+        'Ingeniería Civil',
+        'Otros'
+      ]
     },
     interview: {
       status: 'Recuperando Matriz de Dominio',
@@ -119,7 +177,15 @@ export const TRANSLATIONS: Record<Language, any> = {
       nextInquiry: 'Siguiente Consulta',
       finalize: 'Finalizar Expediente',
       processing: 'Registro Neuronal',
-      integrating: 'Integrando Datos Léxicos...'
+      integrating: 'Integrating Lexical Data...',
+      aiThinking: [
+        "Analizando profundidad de respuesta técnica...",
+        "Generando siguiente pregunta contextual...",
+        "Evaluando competencias específicas del dominio...",
+        "Sincronizando telemetría de respuesta cifrada...",
+        "Calibrando pesos de evaluación neuronal...",
+        "Redactando resumen de desempeño en tiempo real..."
+      ]
     },
     success: {
       synthesis: [
@@ -142,11 +208,16 @@ export const TRANSLATIONS: Record<Language, any> = {
       total: 'Total de Candidatos',
       avg: 'Promedio de Desempeño',
       search: 'Buscar candidatos...',
+      filterAll: 'Todos los Expedientes',
+      filterRecommended: 'Recomendados',
+      filterNotRecommended: 'No Recomendados',
+      export: 'Exportar a Excel',
       table: {
         details: 'Detalles del Candidato',
         domain: 'Dominio',
         score: 'Puntaje IA',
-        status: 'Estado'
+        status: 'Estado',
+        analysis: 'Análisis Técnico'
       }
     }
   },
@@ -157,7 +228,9 @@ export const TRANSLATIONS: Record<Language, any> = {
       submit: 'Soumettre',
       poweredBy: 'Propulsé par',
       secure: 'Session Sécurisée',
-      loading: 'Chargement...'
+      loading: 'Chargement...',
+      hrPanel: 'Espace RH',
+      candidatePortal: 'Portail Candidat'
     },
     login: {
       title: 'Recrutement Professionnel,',
@@ -179,9 +252,29 @@ export const TRANSLATIONS: Record<Language, any> = {
     },
     domains: {
       welcome: 'Bienvenue,',
+      selectionTitle: 'Portail de Sélection du Domaine',
       sub: "Sélectionnez votre secteur d'expertise pour commencer l'évaluation technique.",
       initializing: 'Initialisation du Plan Neuronal',
-      constructing: 'Construction de l\'Architecture {domain}...'
+      constructing: 'Construction de l\'Architecture {domain}...',
+      cardLabel: 'Nom du Domaine'
+    },
+    onboarding: {
+      title: 'Calibration du Profil',
+      experience: 'Quel est votre niveau d\'expérience professionnelle ?',
+      fresher: 'Débutant',
+      experienced: 'Expérimenté',
+      education: 'Sélectionnez votre domaine d\'études principal :',
+      otherField: 'Veuillez préciser votre domaine d\'études :',
+      gradYear: 'Entrez votre année de remise des diplômes :',
+      confirm: 'Confirmer le Profil',
+      fields: [
+        'Génie Informatique',
+        'Génie Électronique',
+        'Génie Électrique',
+        'Génie Mécanique',
+        'Génie Civil',
+        'Autres'
+      ]
     },
     interview: {
       status: 'Récupération de la Matrice',
@@ -193,7 +286,15 @@ export const TRANSLATIONS: Record<Language, any> = {
       nextInquiry: 'Question Suivante',
       finalize: 'Finaliser le Dossier',
       processing: 'Enregistrement Neuronal',
-      integrating: 'Intégration des Données Lexicales...'
+      integrating: 'Intégration des Données Lexicales...',
+      aiThinking: [
+        "Analyse de la profondeur technique...",
+        "Génération de la question suivante...",
+        "Évaluation des compétences métier...",
+        "Synchronisation des données chiffrées...",
+        "Calibrage des poids neuronaux...",
+        "Rédaction du diagnostic de performance..."
+      ]
     },
     success: {
       synthesis: [
@@ -216,11 +317,16 @@ export const TRANSLATIONS: Record<Language, any> = {
       total: 'Total Candidats',
       avg: 'Performance Moyenne',
       search: 'Rechercher des candidats...',
+      filterAll: 'Tous les Dossiers',
+      filterRecommended: 'Recommandés',
+      filterNotRecommended: 'Non Recommandés',
+      export: 'Exporter vers Excel',
       table: {
-        details: 'Détails du Candidat',
+        details: 'Déails du Candidat',
         domain: 'Domaine',
         score: 'Score IA',
-        status: 'Statut'
+        status: 'Statut',
+        analysis: 'Analyse Technique'
       }
     }
   }

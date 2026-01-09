@@ -3,10 +3,10 @@ import React, { useState } from 'react';
 import { DOMAINS, getIcon } from '../constants';
 import { Language } from '../types';
 import { TRANSLATIONS } from '../translations';
-import { Cpu } from 'lucide-react';
+import { Cpu, ChevronRight, LayoutGrid, Fingerprint, Activity, User, MousePointer2 } from 'lucide-react';
 
 interface DomainSelectionViewProps {
-  onSelect: (domain: string, color?: string) => void;
+  onSelect: (domain: string, id: string, color: string) => void;
   userName: string;
   language: Language;
 }
@@ -14,22 +14,27 @@ interface DomainSelectionViewProps {
 const DomainSelectionView: React.FC<DomainSelectionViewProps> = ({ onSelect, userName, language }) => {
   const t = TRANSLATIONS[language].domains;
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [hoveredColor, setHoveredColor] = useState<string | null>(null);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   const handleSelect = (domain: string, id: string, color: string) => {
     setSelectedId(id);
     setTimeout(() => {
-      onSelect(domain, color);
+      onSelect(domain, id, color);
     }, 2000);
   };
 
   const getThemeRgb = (color: string) => {
     const map: Record<string, string> = {
       indigo: '99, 102, 241', emerald: '16, 185, 129', amber: '245, 158, 11', rose: '244, 63, 94', 
-      blue: '59, 130, 246', slate: '71, 85, 105', cyan: '6, 182, 212', fuchsia: '192, 38, 211', violet: '139, 92, 246'
+      blue: '59, 130, 246', slate: '71, 85, 105', cyan: '6, 182, 212', fuchsia: '192, 38, 211', 
+      violet: '139, 92, 246', maroon: '128, 0, 0', orange: '251, 146, 60'
     };
     return map[color] || map.indigo;
   };
+
+  const activeHoveredDomain = DOMAINS.find(d => d.id === hoveredId);
+  const activeRgb = activeHoveredDomain ? getThemeRgb(activeHoveredDomain.color) : '255, 255, 255'; // Default white
+  const activeColorStyle = { color: `rgb(${activeRgb})` };
 
   if (selectedId) {
     const domainObj = DOMAINS.find(d => d.id === selectedId);
@@ -61,42 +66,114 @@ const DomainSelectionView: React.FC<DomainSelectionViewProps> = ({ onSelect, use
     );
   }
 
-  const currentRgb = getThemeRgb(hoveredColor || 'neutral');
-
   return (
-    <div className="h-screen w-full flex flex-col items-center relative transition-all duration-1000 overflow-hidden bg-neutral-950">
-      <div className="fixed inset-0 -z-10 opacity-20 pointer-events-none" style={{ background: `radial-gradient(circle at 50% -20%, rgba(${currentRgb}, 0.1), transparent 50%)` }} />
-      <div className="max-w-4xl w-full text-center mt-auto py-8 relative z-10 animate-in fade-in slide-in-from-top-4 duration-1000 px-6">
-        <h1 className="text-4xl md:text-5xl font-black mb-2 tracking-tight">
-          {t.welcome} <span className="transition-colors duration-1000" style={{ color: hoveredColor ? `rgb(${currentRgb})` : 'rgb(129, 140, 248)' }}>{userName.split(' ')[0]}</span>.
+    <div className="h-screen w-full flex flex-col items-center relative overflow-hidden bg-neutral-950">
+      {/* Background decoration */}
+      <div 
+        className="absolute top-0 left-0 w-full h-full opacity-20 transition-all duration-1000"
+        style={{ background: `radial-gradient(circle at 50% 0%, rgba(${activeRgb}, 0.1) 0%, transparent 70%)` }}
+      />
+      
+      <div className="max-w-6xl w-full text-center pt-24 pb-12 relative z-10 animate-in fade-in slide-in-from-top-4 duration-1000 px-6">
+        <div 
+          className="inline-flex items-center gap-3 px-6 py-3 bg-neutral-900/40 backdrop-blur-xl border border-white/5 rounded-full mb-10 transition-all duration-500"
+          style={{ borderColor: `rgba(${activeRgb}, 0.2)` }}
+        >
+          <MousePointer2 size={14} style={activeColorStyle} className="transition-all duration-500" />
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-neutral-400">
+            Dossier Identity: <span style={activeColorStyle} className="transition-all duration-500">{userName}</span>
+          </span>
+        </div>
+        
+        <h1 className="text-6xl md:text-7xl font-black mb-6 tracking-tight text-white">
+          {t.welcome} <span style={activeColorStyle} className="transition-all duration-500 inline-block drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">{userName.split(' ')[0]}</span>.
         </h1>
-        <p className="text-neutral-500 text-base font-medium max-w-xl mx-auto leading-relaxed">{t.sub}</p>
+        <p className="text-neutral-500 text-xl max-w-2xl mx-auto leading-relaxed font-medium">
+          {t.sub}
+        </p>
       </div>
-      <div className="flex-1 w-full max-w-6xl px-6 mb-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-h-[70vh]">
+
+      <div className="flex-1 w-full max-w-7xl px-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 overflow-y-auto pb-24 pt-4 scrollbar-hide">
         {DOMAINS.map((domain, index) => {
           const rgb = getThemeRgb(domain.color);
-          const isActive = hoveredColor === domain.color;
+          const isHovered = hoveredId === domain.id;
+          
           return (
             <button
               key={domain.id}
-              onMouseEnter={() => setHoveredColor(domain.color)}
-              onMouseLeave={() => setHoveredColor(null)}
+              onMouseEnter={() => setHoveredId(domain.id)}
+              onMouseLeave={() => setHoveredId(null)}
               onClick={() => handleSelect(domain.label, domain.id, domain.color)}
-              className="group relative flex flex-col justify-center items-center text-center p-8 bg-neutral-900/30 border-2 rounded-[2rem] transition-all duration-500 backdrop-blur-md hover:bg-neutral-800/60 hover:-translate-y-2 animate-in fade-in zoom-in-95"
-              style={{ borderColor: isActive ? `rgba(${rgb}, 0.6)` : 'rgba(255,255,255,0.05)', boxShadow: isActive ? `0 25px 50px -12px rgba(${rgb}, 0.3)` : 'none', animationDelay: `${index * 40}ms` }}
+              className="group relative flex flex-col items-start p-10 bg-neutral-900/20 border-2 rounded-[3rem] transition-all duration-700 backdrop-blur-sm hover:bg-neutral-800/30 hover:-translate-y-2 animate-in fade-in zoom-in-95 text-left overflow-hidden"
+              style={{ 
+                borderColor: isHovered ? `rgba(${rgb}, 0.4)` : 'rgba(255,255,255,0.03)',
+                boxShadow: isHovered ? `0 30px 60px -15px rgba(${rgb}, 0.15)` : 'none',
+                animationDelay: `${index * 60}ms`
+              }}
             >
-              <div className="p-5 rounded-2xl transition-all duration-500 border mb-4 relative" style={{ backgroundColor: isActive ? `rgba(${rgb}, 0.15)` : 'rgba(255,255,255,0.02)', borderColor: isActive ? `rgba(${rgb}, 0.4)` : 'rgba(255,255,255,0.05)', color: isActive ? `rgb(${rgb})` : '#666' }}>
-                {getIcon(domain.icon, 32)}
+              {/* Domain Icon */}
+              <div className="flex items-center justify-between w-full mb-10 relative z-10">
+                <div 
+                  className="p-5 rounded-[1.5rem] border transition-all duration-700" 
+                  style={{ 
+                    backgroundColor: `rgba(${rgb}, 0.08)`, 
+                    borderColor: isHovered ? `rgba(${rgb}, 0.3)` : 'rgba(255,255,255,0.05)',
+                    color: isHovered ? `rgb(${rgb})` : 'rgba(255,255,255,0.4)'
+                  }}
+                >
+                  {getIcon(domain.icon, 28)}
+                </div>
+                <div className="px-4 py-1.5 rounded-xl bg-neutral-950/50 border border-white/5 text-[9px] font-black uppercase tracking-widest text-neutral-600">
+                  REF-{domain.id.toUpperCase()}
+                </div>
               </div>
-              <div className="relative z-10">
-                <h3 className="text-xl font-black transition-colors duration-500 mb-2" style={{ color: isActive ? '#fff' : '#d4d4d4' }}>{domain.label}</h3>
-                <p className="text-neutral-500 text-sm leading-relaxed group-hover:text-neutral-400 transition-colors duration-500 max-w-[200px] mx-auto line-clamp-2">{domain.description}</p>
+
+              {/* DOMAIN NAME */}
+              <div className="relative z-10 w-full mb-6">
+                <span className="block text-[10px] font-black text-neutral-600 uppercase tracking-[0.4em] mb-3 group-hover:text-neutral-400 transition-colors">
+                  {t.cardLabel}
+                </span>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-3xl font-black text-white group-hover:text-white transition-colors leading-tight">
+                    {domain.label}
+                  </h3>
+                  <ChevronRight 
+                    size={28} 
+                    className={`transition-all duration-700 transform ${isHovered ? 'translate-x-0 opacity-100 scale-110' : '-translate-x-4 opacity-0 scale-75'}`} 
+                    style={{ color: `rgb(${rgb})` }} 
+                  />
+                </div>
               </div>
-              <span className="absolute top-6 left-6 text-[10px] font-mono text-neutral-800 font-bold">IDX-0{index + 1}</span>
+              
+              <p className="text-neutral-500 text-sm leading-relaxed mb-10 relative z-10 font-medium group-hover:text-neutral-400 transition-colors">
+                {domain.description}
+              </p>
+
+              {/* Bottom Decoration */}
+              <div className="mt-auto w-full flex items-center justify-between relative z-10">
+                <div className="flex items-center gap-3">
+                  <Activity size={14} style={{ color: isHovered ? `rgb(${rgb})` : 'rgba(255,255,255,0.1)' }} className="transition-all duration-700" />
+                  <span className="text-[10px] font-mono text-neutral-700 font-bold uppercase tracking-wider">LATEST STACK</span>
+                </div>
+                <div className="h-1 w-16 rounded-full bg-neutral-800/50 overflow-hidden">
+                  <div className="h-full transition-all duration-1000 w-0 group-hover:w-full" style={{ backgroundColor: `rgb(${rgb})` }} />
+                </div>
+              </div>
+
+              {/* Background Accent Gradient */}
+              <div 
+                className="absolute top-0 right-0 w-48 h-48 blur-[100px] opacity-0 group-hover:opacity-30 transition-opacity duration-1000 pointer-events-none"
+                style={{ backgroundColor: `rgb(${rgb})` }}
+              />
             </button>
           );
         })}
       </div>
+      
+      <style>{`
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
     </div>
   );
 };
